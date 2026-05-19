@@ -59,15 +59,21 @@ _build
 **/runs/*
 **/logs/*
 **/recordings/*
+**/outputs/*
 
 # Pre-Trained Checkpoints
 /.pretrained_checkpoints/
 
 # Teleop Recorded Dataset
 /datasets/
+/exported/
 
 # Tests
 tests/
 
 # Docker history
 .uw-lab-docker-history
+
+#CLAUDE
+.claude/
+CLAUDE.md

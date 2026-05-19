@@ -189,105 +189,9 @@ class BaseRGBEventCfg(FinetuneEvalEventCfg):
 class RGBEventCfg(BaseRGBEventCfg):
     """Configuration for randomization."""
 
-    randomize_wrist_mount_appearance = EventTerm(
-        func=task_mdp.randomize_visual_appearance_multiple_meshes,
-        mode="interval",
-        interval_range_s=(4.0, 4.0),
-        params={
-            "asset_cfg": SceneEntityCfg("robot"),
-            "event_name": "randomize_wrist_mount_event",
-            "mesh_names": ["robotiq_base_link/visuals/D415_to_Robotiq_Mount"],
-            "texture_prob": 0.5,
-            "texture_config_path": str(Path(__file__).parent / "resources" / "texture_paths.yaml"),
-            "diffuse_tint_range": ((0.0, 0.0, 0.0), (1.0, 1.0, 1.0)),
-            "colors": {"r": (0.0, 1.0), "g": (0.0, 1.0), "b": (0.0, 1.0)},
-            "texture_scale_range": (0.7, 5.0),
-            "roughness_range": (0.2, 1.0),
-            "metallic_range": (0.0, 0.8),
-            "specular_range": (0.0, 1.0),
-        },
-    )
-
-    randomize_inner_finger_appearance = EventTerm(
-        func=task_mdp.randomize_visual_appearance_multiple_meshes,
-        mode="interval",
-        interval_range_s=(4.0, 4.0),
-        params={
-            "asset_cfg": SceneEntityCfg("robot"),
-            "event_name": "randomize_inner_finger_event",
-            "mesh_names": ["left_inner_finger/visuals/mesh_1", "right_inner_finger/visuals/mesh_1"],
-            "texture_prob": 0.5,
-            "texture_config_path": str(Path(__file__).parent / "resources" / "texture_paths.yaml"),
-            "diffuse_tint_range": ((0.0, 0.0, 0.0), (1.0, 1.0, 1.0)),
-            "colors": {"r": (0.0, 1.0), "g": (0.0, 1.0), "b": (0.0, 1.0)},
-            "texture_scale_range": (0.7, 5.0),
-            "roughness_range": (0.2, 1.0),
-            "metallic_range": (0.0, 0.8),
-            "specular_range": (0.0, 1.0),
-        },
-    )
-
-    randomize_insertive_object_appearance = EventTerm(
-        func=task_mdp.randomize_visual_appearance_multiple_meshes,
-        mode="interval",
-        interval_range_s=(4.0, 4.0),
-        params={
-            "asset_cfg": SceneEntityCfg("insertive_object"),
-            "event_name": "randomize_insertive_object_event",
-            "mesh_names": [],
-            "texture_prob": 0.5,
-            "texture_config_path": str(Path(__file__).parent / "resources" / "texture_paths.yaml"),
-            "diffuse_tint_range": ((0.0, 0.0, 0.0), (1.0, 1.0, 1.0)),
-            "colors": {"r": (0.0, 1.0), "g": (0.0, 1.0), "b": (0.0, 1.0)},
-            "texture_scale_range": (0.7, 5.0),
-            "roughness_range": (0.0, 1.0),
-            "metallic_range": (0.0, 1.0),
-            "specular_range": (0.0, 1.0),
-        },
-    )
-
-    randomize_receptive_object_appearance = EventTerm(
-        func=task_mdp.randomize_visual_appearance_multiple_meshes,
-        mode="interval",
-        interval_range_s=(4.0, 4.0),
-        params={
-            "asset_cfg": SceneEntityCfg("receptive_object"),
-            "event_name": "randomize_receptive_object_event",
-            "mesh_names": [],
-            "texture_prob": 0.5,
-            "texture_config_path": str(Path(__file__).parent / "resources" / "texture_paths.yaml"),
-            "diffuse_tint_range": ((0.0, 0.0, 0.0), (1.0, 1.0, 1.0)),
-            "colors": {"r": (0.0, 1.0), "g": (0.0, 1.0), "b": (0.0, 1.0)},
-            "texture_scale_range": (0.7, 5.0),
-            "roughness_range": (0.0, 1.0),
-            "metallic_range": (0.0, 1.0),
-            "specular_range": (0.0, 1.0),
-        },
-    )
-
-    randomize_table_appearance = EventTerm(
-        func=task_mdp.randomize_visual_appearance_multiple_meshes,
-        mode="interval",
-        interval_range_s=(4.0, 4.0),
-        params={
-            "asset_cfg": SceneEntityCfg("table"),
-            "event_name": "randomize_table_event",
-            "mesh_names": ["visuals/vention_mat"],
-            "texture_prob": 0.5,
-            "texture_config_path": str(Path(__file__).parent / "resources" / "texture_paths.yaml"),
-            "diffuse_tint_range": ((0.0, 0.0, 0.0), (1.0, 1.0, 1.0)),
-            "colors": {"r": (0.0, 1.0), "g": (0.0, 1.0), "b": (0.0, 1.0)},
-            "texture_scale_range": (0.7, 5.0),
-            "roughness_range": (0.3, 0.9),
-            "metallic_range": (0.0, 0.3),
-            "specular_range": (0.0, 1.0),
-        },
-    )
-
     randomize_curtain_left_appearance = EventTerm(
         func=task_mdp.randomize_visual_appearance_multiple_meshes,
-        mode="interval",
-        interval_range_s=(4.0, 4.0),
+        mode="startup",
         params={
             "asset_cfg": SceneEntityCfg("curtain_left"),
             "event_name": "randomize_curtain_left_event",
@@ -305,8 +209,7 @@ class RGBEventCfg(BaseRGBEventCfg):
 
     randomize_curtain_back_appearance = EventTerm(
         func=task_mdp.randomize_visual_appearance_multiple_meshes,
-        mode="interval",
-        interval_range_s=(4.0, 4.0),
+        mode="startup",
         params={
             "asset_cfg": SceneEntityCfg("curtain_back"),
             "event_name": "randomize_curtain_back_event",
@@ -324,8 +227,7 @@ class RGBEventCfg(BaseRGBEventCfg):
 
     randomize_curtain_right_appearance = EventTerm(
         func=task_mdp.randomize_visual_appearance_multiple_meshes,
-        mode="interval",
-        interval_range_s=(4.0, 4.0),
+        mode="startup",
         params={
             "asset_cfg": SceneEntityCfg("curtain_right"),
             "event_name": "randomize_curtain_right_event",
@@ -344,8 +246,7 @@ class RGBEventCfg(BaseRGBEventCfg):
     # reset background
     randomize_sky_light = EventTerm(
         func=task_mdp.randomize_hdri,
-        mode="interval",
-        interval_range_s=(4.0, 4.0),
+        mode="startup",
         params={
             "light_path": "/World/skyLight",
             "hdri_config_path": str(Path(__file__).parent / "resources" / "hdri_paths.yaml"),
