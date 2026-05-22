@@ -82,6 +82,10 @@ def parse_args() -> argparse.Namespace:
     p.add_argument("--fps", type=int, default=10, help="Frames per second (decimation=12 * sim_dt=1/120 -> 10 Hz).")
     p.add_argument("--state_keys", nargs="+", default=DEFAULT_STATE_KEYS,
                    help="Zarr obs keys concatenated into observation.state.")
+    p.add_argument("--trim_head", type=int, default=2,
+                   help="Drop the first N frames of every episode. The RTX render pipeline "
+                        "yields stale frames right after a reset; collect_demos.py zeros the "
+                        "action for WARMUP_STEPS steps, and N must match that value.")
     p.add_argument("--no_videos", action="store_true", help="Store images as PNG instead of mp4 video.")
     p.add_argument("--image_writer_threads", type=int, default=4)
     p.add_argument("--image_writer_processes", type=int, default=0)
@@ -206,6 +210,7 @@ def main() -> int:
     logger.info("Action dim:     %d", action_dim)
     logger.info("Image shape:    %s", img_shape)
     logger.info("Storage mode:   %s", "PNG" if args.no_videos else "mp4 (video)")
+    logger.info("Trim head:      %d frame(s) dropped per episode", args.trim_head)
     logger.info("Output root:    %s", args.dst)
 
     if args.dry_run:
@@ -237,6 +242,7 @@ def main() -> int:
 
     # --- iterate episodes ---
     ep_global = 0
+    skipped_short = 0
     for h in handles:
         ee = h["episode_ends"]
         starts = np.concatenate([[0], ee[:-1]])
@@ -244,16 +250,26 @@ def main() -> int:
             if args.max_episodes is not None and ep_global >= args.max_episodes:
                 logger.info("Reached --max_episodes=%d, stopping.", args.max_episodes)
                 break
-            for t in range(int(s), int(e)):
+            # Drop the first --trim_head frames (render warm-up / stale frames after reset).
+            ep_start = int(s) + args.trim_head
+            ep_end = int(e)
+            if ep_start >= ep_end:
+                logger.warning("  episode (len=%d) shorter than --trim_head=%d, skipping.",
+                               ep_end - int(s), args.trim_head)
+                skipped_short += 1
+                continue
+            for t in range(ep_start, ep_end):
                 frame = build_frame(h, t, args.state_keys)
                 dataset.add_frame(frame, task=args.task)
             dataset.save_episode()
             ep_global += 1
             if ep_global % 10 == 0 or ep_global == total_episodes:
-                logger.info("  saved episode %d / %d  (len=%d)", ep_global, total_episodes, int(e - s))
+                logger.info("  saved episode %d / %d  (len=%d)", ep_global, total_episodes, ep_end - ep_start)
         if args.max_episodes is not None and ep_global >= args.max_episodes:
             break
 
+    if skipped_short:
+        logger.info("Skipped %d episode(s) shorter than --trim_head=%d.", skipped_short, args.trim_head)
     logger.info("Done.  Wrote %d episodes to %s", ep_global, dst)
     return 0
 

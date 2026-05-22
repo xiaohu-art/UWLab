@@ -63,6 +63,8 @@ torch.backends.cudnn.allow_tf32 = True
 torch.backends.cudnn.deterministic = False
 torch.backends.cudnn.benchmark = False
 
+WARMUP_STEPS = 2
+
 
 def process_agent_cfg(env_cfg, agent_cfg):
     if hasattr(agent_cfg.algorithm, "behavior_cloning_cfg"):
@@ -168,11 +170,10 @@ def main(env_cfg: ManagerBasedRLEnvCfg | DirectRLEnvCfg, agent_cfg: RslRlOnPolic
             mean, std = expert_policy.compute_distribution(expert_policy_obs)
             actions = mean if args_cli.deterministic else torch.normal(mean, std)
 
-            # Mask actions to zero for environments in their first step after reset since first image may not be valid
-            first_step_mask = env.unwrapped.episode_length_buf == 0
-            if torch.any(first_step_mask):
-                actions[first_step_mask, :-1] = 0.0
-                actions[first_step_mask, -1] = -1.0  # close gripper
+            warmup_mask = env.unwrapped.episode_length_buf < WARMUP_STEPS
+            if torch.any(warmup_mask):
+                actions[warmup_mask, :-1] = 0.0
+                actions[warmup_mask, -1] = -1.0  # close gripper
 
             # Inject expert distribution into obs_buf so recorder saves them alongside observations
             env.unwrapped.obs_buf["data_collection"]["expert_action_mean"] = mean.clone()
