@@ -18,6 +18,7 @@ from isaaclab.managers import TerminationTermCfg as DoneTerm
 from isaaclab.sensors import TiledCameraCfg
 from isaaclab.utils import configclass
 
+from isaaclab.utils.assets import ISAAC_NUCLEUS_DIR
 from uwlab_assets import UWLAB_CLOUD_ASSETS_DIR
 
 from ... import mdp as task_mdp
@@ -189,57 +190,20 @@ class BaseRGBEventCfg(FinetuneEvalEventCfg):
 class RGBEventCfg(BaseRGBEventCfg):
     """Configuration for randomization."""
 
-    randomize_curtain_left_appearance = EventTerm(
+    randomize_table_appearance = EventTerm(
         func=task_mdp.randomize_visual_appearance_multiple_meshes,
         mode="startup",
         params={
-            "asset_cfg": SceneEntityCfg("curtain_left"),
-            "event_name": "randomize_curtain_left_event",
-            "mesh_names": [],
-            "texture_prob": 0.5,
-            "texture_config_path": str(Path(__file__).parent / "resources" / "texture_paths.yaml"),
-            "diffuse_tint_range": ((0.0, 0.0, 0.0), (1.0, 1.0, 1.0)),
-            "colors": {"r": (0.0, 1.0), "g": (0.0, 1.0), "b": (0.0, 1.0)},
-            "texture_scale_range": (0.7, 5.0),
-            "roughness_range": (0.0, 1.0),
-            "metallic_range": (0.0, 1.0),
-            "specular_range": (0.0, 1.0),
-        },
-    )
-
-    randomize_curtain_back_appearance = EventTerm(
-        func=task_mdp.randomize_visual_appearance_multiple_meshes,
-        mode="startup",
-        params={
-            "asset_cfg": SceneEntityCfg("curtain_back"),
-            "event_name": "randomize_curtain_back_event",
-            "mesh_names": [],
-            "texture_prob": 0.5,
-            "texture_config_path": str(Path(__file__).parent / "resources" / "texture_paths.yaml"),
-            "diffuse_tint_range": ((0.0, 0.0, 0.0), (1.0, 1.0, 1.0)),
-            "colors": {"r": (0.0, 1.0), "g": (0.0, 1.0), "b": (0.0, 1.0)},
-            "texture_scale_range": (0.7, 5.0),
-            "roughness_range": (0.0, 1.0),
-            "metallic_range": (0.0, 1.0),
-            "specular_range": (0.0, 1.0),
-        },
-    )
-
-    randomize_curtain_right_appearance = EventTerm(
-        func=task_mdp.randomize_visual_appearance_multiple_meshes,
-        mode="startup",
-        params={
-            "asset_cfg": SceneEntityCfg("curtain_right"),
-            "event_name": "randomize_curtain_right_event",
-            "mesh_names": [],
-            "texture_prob": 0.5,
-            "texture_config_path": str(Path(__file__).parent / "resources" / "texture_paths.yaml"),
-            "diffuse_tint_range": ((0.0, 0.0, 0.0), (1.0, 1.0, 1.0)),
-            "colors": {"r": (0.0, 1.0), "g": (0.0, 1.0), "b": (0.0, 1.0)},
-            "texture_scale_range": (0.7, 5.0),
-            "roughness_range": (0.0, 1.0),
-            "metallic_range": (0.0, 1.0),
-            "specular_range": (0.0, 1.0),
+            "asset_cfg": SceneEntityCfg("table"),
+            "event_name": "randomize_table_event",
+            "mesh_names": ["visuals/vention_mat"],
+            "texture_prob": 1.0,
+            "texture_config_path": str(Path(__file__).parent / "resources" / "wood_textures.yaml"),
+            "texture_scale_range": (1.5, 1.5),
+            "diffuse_tint_range": ((1.0, 1.0, 1.0), (1.0, 1.0, 1.0)),
+            "roughness_range": (0.7, 0.7),
+            "metallic_range": (0.0, 0.0),
+            "specular_range": (0.3, 0.3),
         },
     )
 
@@ -282,7 +246,7 @@ class DataCollectionRGBEventCfg(RGBEventCfg):
                 "ObjectAnywhereEEGrasped",
                 "ObjectPartiallyAssembledEEGrasped",
             ],
-            "probs": [0.25, 0.25, 0.25, 0.25],
+            "probs": [1.0, 0.0, 0.0, 0.0],
             "success": "env.reward_manager.get_term_cfg('progress_context').func.success",
         },
     )

@@ -1,0 +1,13 @@
+# Copyright (c) 2024-2026, The UW Lab Project Developers. ...
+# All Rights Reserved.
+# SPDX-License-Identifier: BSD-3-Clause
+
+cloud:
+- Assets/NVIDIA/Textures/Base/Wood/Oak_Planks/Oak_Planks_BaseColor.png
+- Assets/NVIDIA/Textures/Base/Wood/Walnut_Planks/Walnut_Planks_BaseColor.png
+- Assets/NVIDIA/Textures/Base/Wood/Cherry_Planks/Cherry_Planks_BaseColor.png
+- Assets/NVIDIA/Textures/Base/Wood/Birch_Planks/Birch_Planks_BaseColor.png
+- Assets/NVIDIA/Textures/Base/Wood/Mahogany_Planks/Mahogany_Planks_BaseColor.png
+- Assets/NVIDIA/Textures/Base/Wood/Ash_Planks/Ash_Planks_BaseColor.png
+- Assets/NVIDIA/Textures/Base/Wood/Bamboo_Planks/Bamboo_Planks_BaseColor.png
+- Assets/NVIDIA/Textures/Base/Wood/Timber/Timber_BaseColor.png
