@@ -16,6 +16,7 @@ import argparse
 import contextlib
 import gymnasium as gym
 import os
+import time
 import torch
 from tqdm import tqdm
 
@@ -32,6 +33,12 @@ parser.add_argument(
     action="store_true",
     default=False,
     help="Use the mean of the policy distribution instead of sampling.",
+)
+parser.add_argument(
+    "--stats_interval_s",
+    type=float,
+    default=0.0,
+    help="Print rollout throughput and termination diagnostics every N seconds. Disabled by default.",
 )
 
 # append AppLauncher cli args
@@ -158,6 +165,16 @@ def main(env_cfg: ManagerBasedRLEnvCfg | DirectRLEnvCfg, agent_cfg: RslRlOnPolic
 
     print(f"[Policy] {'Deterministic (mean)' if args_cli.deterministic else 'Stochastic (sampled)'} actions")
 
+    term_names = getattr(env.unwrapped.termination_manager, "_term_names", [])
+    term_counts = {name: 0 for name in term_names}
+    total_finished_episodes = 0
+    total_steps = 0
+    stats_start_time = time.monotonic()
+    last_stats_time = stats_start_time
+    last_stats_steps = 0
+    last_stats_finished_episodes = 0
+    last_stats_recorded_demo_count = 0
+
     # simulate environment -- run everything in inference mode
     current_recorded_demo_count = 0
     with contextlib.suppress(KeyboardInterrupt), torch.inference_mode():
@@ -180,7 +197,26 @@ def main(env_cfg: ManagerBasedRLEnvCfg | DirectRLEnvCfg, agent_cfg: RslRlOnPolic
             env.unwrapped.obs_buf["data_collection"]["expert_action_std"] = std.clone()
 
             # env stepping
-            env.step(actions)
+            step_result = env.step(actions)
+            total_steps += 1
+
+            dones = None
+            if isinstance(step_result, tuple):
+                if len(step_result) == 4:
+                    _, _, dones, _ = step_result
+                elif len(step_result) == 5:
+                    _, _, terminated, truncated, _ = step_result
+                    dones = terminated | truncated
+
+            if isinstance(dones, torch.Tensor) and dones.any():
+                reset_ids = (dones > 0).nonzero(as_tuple=False).reshape(-1)
+                total_finished_episodes += len(reset_ids)
+                term_dones = env.unwrapped.termination_manager._term_dones[reset_ids]
+                for term_row in term_dones:
+                    active = term_row.nonzero(as_tuple=False).flatten().cpu().tolist()
+                    for term_idx in active:
+                        if term_idx < len(term_names):
+                            term_counts[term_names[term_idx]] += 1
 
             # print out the current demo count if it has changed
             new_count = env.unwrapped.recorder_manager.exported_successful_episode_count
@@ -188,6 +224,35 @@ def main(env_cfg: ManagerBasedRLEnvCfg | DirectRLEnvCfg, agent_cfg: RslRlOnPolic
                 increment = new_count - current_recorded_demo_count
                 current_recorded_demo_count = new_count
                 pbar.update(increment)
+
+            if args_cli.stats_interval_s > 0:
+                now = time.monotonic()
+                if now - last_stats_time >= args_cli.stats_interval_s:
+                    window_s = max(now - last_stats_time, 1e-6)
+                    elapsed_s = max(now - stats_start_time, 1e-6)
+                    window_steps = total_steps - last_stats_steps
+                    window_finished = total_finished_episodes - last_stats_finished_episodes
+                    window_recorded = current_recorded_demo_count - last_stats_recorded_demo_count
+                    success_count = term_counts.get("success", 0)
+                    success_rate = success_count / total_finished_episodes if total_finished_episodes > 0 else 0.0
+                    term_summary = ", ".join(f"{name}={count}" for name, count in term_counts.items() if count)
+                    if not term_summary:
+                        term_summary = "none"
+                    tqdm.write(
+                        "[stats] "
+                        f"recorded={current_recorded_demo_count}/{args_cli.num_demos} "
+                        f"finished={total_finished_episodes} "
+                        f"success_rate={success_rate:.1%} "
+                        f"steps/s={total_steps / elapsed_s:.2f} "
+                        f"window_steps/s={window_steps / window_s:.2f} "
+                        f"window_finished={window_finished} "
+                        f"window_recorded={window_recorded} "
+                        f"terms=({term_summary})"
+                    )
+                    last_stats_time = now
+                    last_stats_steps = total_steps
+                    last_stats_finished_episodes = total_finished_episodes
+                    last_stats_recorded_demo_count = current_recorded_demo_count
 
             if args_cli.num_demos > 0 and new_count >= args_cli.num_demos:
                 print(f"All {args_cli.num_demos} demonstrations recorded. Exiting the app.")
