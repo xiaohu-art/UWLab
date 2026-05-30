@@ -131,6 +131,19 @@ gym.register(
 )
 
 gym.register(
+    id="OmniReset-Ur5eRobotiq2f85-RelCartesianOSC-RGB-CleanUprightPeg-DataCollection-v0",
+    entry_point="isaaclab.envs:ManagerBasedRLEnv",
+    disable_env_checker=True,
+    kwargs={
+        "env_cfg_entry_point": (
+            f"{__name__}.data_collection_rgb_cfg:"
+            "Ur5eRobotiq2f85CleanUprightPegDataCollectionRGBRelCartesianOSCCfg"
+        ),
+        "rsl_rl_cfg_entry_point": f"{agents.__name__}.rsl_rl_cfg:Base_DAggerRunnerCfg",
+    },
+)
+
+gym.register(
     id="OmniReset-Ur5eRobotiq2f85-RelCartesianOSC-RGB-Play-v0",
     entry_point="isaaclab.envs:ManagerBasedRLEnv",
     disable_env_checker=True,

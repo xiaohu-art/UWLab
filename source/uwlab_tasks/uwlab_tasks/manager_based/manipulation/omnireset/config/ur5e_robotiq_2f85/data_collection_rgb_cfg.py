@@ -253,6 +253,51 @@ class DataCollectionRGBEventCfg(RGBEventCfg):
 
 
 @configclass
+class CleanUprightPegRGBEventCfg:
+    """Clean success collection reset: fixed robot/cameras/lights, upright peg on the table."""
+
+    reset_everything = EventTerm(func=task_mdp.reset_scene_to_default, mode="reset", params={})
+
+    reset_receptive_object_pose = EventTerm(
+        func=task_mdp.reset_root_states_uniform,
+        mode="reset",
+        params={
+            "pose_range": {
+                "x": (0.3, 0.55),
+                "y": (-0.1, 0.3),
+                "z": (0.0, 0.0),
+                "roll": (0.0, 0.0),
+                "pitch": (0.0, 0.0),
+                "yaw": (0.0, 0.0),
+            },
+            "velocity_range": {},
+            "asset_cfgs": {"receptive_object": SceneEntityCfg("receptive_object")},
+            "offset_asset_cfg": SceneEntityCfg("ur5_metal_support"),
+            "use_bottom_offset": True,
+        },
+    )
+
+    reset_insertive_object_pose = EventTerm(
+        func=task_mdp.reset_root_states_uniform,
+        mode="reset",
+        params={
+            "pose_range": {
+                "x": (0.3, 0.55),
+                "y": (-0.1, 0.5),
+                "z": (0.0, 0.0),
+                "roll": (0.0, 0.0),
+                "pitch": (0.0, 0.0),
+                "yaw": (0.0, 0.0),
+            },
+            "velocity_range": {},
+            "asset_cfgs": {"insertive_object": SceneEntityCfg("insertive_object")},
+            "offset_asset_cfg": SceneEntityCfg("ur5_metal_support"),
+            "use_bottom_offset": True,
+        },
+    )
+
+
+@configclass
 class RGBCommandsCfg:
     """Command specifications for the MDP."""
 
@@ -503,6 +548,15 @@ class Ur5eRobotiq2f85RGBRelCartesianOSCEvalCfg(Ur5eRobotiq2f85RlStateCfg):
 @configclass
 class Ur5eRobotiq2f85DataCollectionRGBRelCartesianOSCCfg(Ur5eRobotiq2f85RGBRelCartesianOSCEvalCfg):
     events: DataCollectionRGBEventCfg = DataCollectionRGBEventCfg()
+
+
+@configclass
+class Ur5eRobotiq2f85CleanUprightPegDataCollectionRGBRelCartesianOSCCfg(
+    Ur5eRobotiq2f85RGBRelCartesianOSCEvalCfg
+):
+    """RGB data collection with default robot state, fixed visuals, and upright peg reset."""
+
+    events: CleanUprightPegRGBEventCfg = CleanUprightPegRGBEventCfg()
 
 
 @configclass
