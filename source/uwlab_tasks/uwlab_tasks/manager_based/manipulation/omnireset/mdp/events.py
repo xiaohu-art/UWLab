@@ -1304,6 +1304,39 @@ class reset_root_states_uniform(ManagerTermBase):
             asset.write_root_velocity_to_sim(velocities, env_ids=env_ids)
 
 
+class reset_articulation_to_default(ManagerTermBase):
+    """Reset an articulation root pose and joints to the scene default state."""
+
+    def __init__(self, cfg: EventTermCfg, env: ManagerBasedEnv):
+        super().__init__(cfg, env)
+
+        self.asset_cfg = cfg.params.get("asset_cfg")
+        self.zero_velocity = cfg.params.get("zero_velocity", True)
+
+    def __call__(
+        self,
+        env: ManagerBasedEnv,
+        env_ids: torch.Tensor,
+        asset_cfg: SceneEntityCfg,
+        zero_velocity: bool = True,
+    ) -> None:
+        asset: Articulation = env.scene[self.asset_cfg.name]
+
+        root_pose = asset.data.default_root_state[env_ids, :7].clone()
+        root_pose[:, :3] += env.scene.env_origins[env_ids]
+        root_velocity = torch.zeros_like(asset.data.default_root_state[env_ids, 7:13])
+
+        joint_pos = asset.data.default_joint_pos[env_ids].clone()
+        joint_vel = torch.zeros_like(asset.data.default_joint_vel[env_ids])
+
+        asset.write_root_pose_to_sim(root_pose, env_ids=env_ids)
+        if self.zero_velocity:
+            asset.write_root_velocity_to_sim(root_velocity, env_ids=env_ids)
+        asset.write_joint_state_to_sim(joint_pos, joint_vel, env_ids=env_ids)
+        asset.set_joint_position_target(joint_pos, env_ids=env_ids)
+        asset.set_joint_velocity_target(joint_vel, env_ids=env_ids)
+
+
 class force_root_upright_preserve_yaw(ManagerTermBase):
     """Force an asset upright after another reset term, preserving position and yaw."""
 

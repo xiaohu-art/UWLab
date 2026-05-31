@@ -271,6 +271,33 @@ class CleanUprightPegRGBEventCfg(DataCollectionRGBEventCfg):
 
 
 @configclass
+class FixedRobotCleanUprightPegRGBEventCfg(DataCollectionRGBEventCfg):
+    """Original RGB data-collection reset, then reset robot to default and force peg upright."""
+
+    reset_robot_to_default = EventTerm(
+        func=task_mdp.reset_articulation_to_default,
+        mode="reset",
+        params={
+            "asset_cfg": SceneEntityCfg("robot"),
+            "zero_velocity": True,
+        },
+    )
+
+    force_insertive_object_upright = EventTerm(
+        func=task_mdp.force_root_upright_preserve_yaw,
+        mode="reset",
+        params={
+            "pose_range": {
+                "roll": (0.0, 0.0),
+                "pitch": (0.0, 0.0),
+            },
+            "asset_cfg": SceneEntityCfg("insertive_object"),
+            "zero_velocity": True,
+        },
+    )
+
+
+@configclass
 class RGBCommandsCfg:
     """Command specifications for the MDP."""
 
@@ -527,9 +554,18 @@ class Ur5eRobotiq2f85DataCollectionRGBRelCartesianOSCCfg(Ur5eRobotiq2f85RGBRelCa
 class Ur5eRobotiq2f85CleanUprightPegDataCollectionRGBRelCartesianOSCCfg(
     Ur5eRobotiq2f85RGBRelCartesianOSCEvalCfg
 ):
-    """RGB data collection with default robot state, fixed visuals, and upright peg reset."""
+    """RGB data collection with original reset-state replay and upright peg reset."""
 
     events: CleanUprightPegRGBEventCfg = CleanUprightPegRGBEventCfg()
+
+
+@configclass
+class Ur5eRobotiq2f85FixedRobotCleanUprightPegDataCollectionRGBRelCartesianOSCCfg(
+    Ur5eRobotiq2f85RGBRelCartesianOSCEvalCfg
+):
+    """RGB data collection with default robot state and upright peg after reset-state replay."""
+
+    events: FixedRobotCleanUprightPegRGBEventCfg = FixedRobotCleanUprightPegRGBEventCfg()
 
 
 @configclass
