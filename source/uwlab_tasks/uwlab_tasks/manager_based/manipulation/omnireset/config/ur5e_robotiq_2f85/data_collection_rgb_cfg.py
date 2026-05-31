@@ -301,14 +301,90 @@ class FixedRobotCleanUprightPegRGBEventCfg(DataCollectionRGBEventCfg):
 class FixedRobotFixedVisualCleanUprightPegRGBEventCfg(FixedRobotCleanUprightPegRGBEventCfg):
     """Fixed robot/upright peg data collection with camera and lighting randomization disabled."""
 
-    randomize_front_camera = None
-    randomize_front_camera_focal_length = None
-    randomize_side_camera = None
-    randomize_side_camera_focal_length = None
-    randomize_wrist_camera = None
-    randomize_wrist_camera_focal_length = None
-    randomize_table_appearance = None
-    randomize_sky_light = None
+    randomize_front_camera = EventTerm(
+        func=task_mdp.randomize_tiled_cameras,
+        mode="reset",
+        params={
+            "camera_path_template": "/World/envs/env_{}/Robot/rgb_front_camera",
+            "base_position": (1.0770121, -0.1679045, 0.4486344),
+            "base_rotation": (0.70564552, 0.46613815, 0.25072644, 0.47107948),
+            "position_deltas": {"x": (0.0, 0.0), "y": (0.0, 0.0), "z": (0.0, 0.0)},
+            "euler_deltas": {"pitch": (0.0, 0.0), "yaw": (0.0, 0.0), "roll": (0.0, 0.0)},
+        },
+    )
+
+    randomize_front_camera_focal_length = EventTerm(
+        func=task_mdp.randomize_camera_focal_length,
+        mode="reset",
+        params={"camera_path_template": "/World/envs/env_{}/Robot/rgb_front_camera", "focal_length_range": (13.20, 13.20)},
+    )
+
+    randomize_side_camera = EventTerm(
+        func=task_mdp.randomize_tiled_cameras,
+        mode="reset",
+        params={
+            "camera_path_template": "/World/envs/env_{}/Robot/rgb_side_camera",
+            "base_position": (0.8323904, 0.5877843, 0.2805111),
+            "base_rotation": (0.29008842, 0.22122445, 0.51336143, 0.77676798),
+            "position_deltas": {"x": (0.0, 0.0), "y": (0.0, 0.0), "z": (0.0, 0.0)},
+            "euler_deltas": {"pitch": (0.0, 0.0), "yaw": (0.0, 0.0), "roll": (0.0, 0.0)},
+        },
+    )
+
+    randomize_side_camera_focal_length = EventTerm(
+        func=task_mdp.randomize_camera_focal_length,
+        mode="reset",
+        params={"camera_path_template": "/World/envs/env_{}/Robot/rgb_side_camera", "focal_length_range": (20.10, 20.10)},
+    )
+
+    randomize_wrist_camera = EventTerm(
+        func=task_mdp.randomize_tiled_cameras,
+        mode="reset",
+        params={
+            "camera_path_template": "/World/envs/env_{}/Robot/robotiq_base_link/rgb_wrist_camera",
+            "base_position": (0.0182505, -0.00408447, -0.0689107),
+            "base_rotation": (0.34254336, -0.61819255, -0.6160212, 0.347879),
+            "position_deltas": {"x": (0.0, 0.0), "y": (0.0, 0.0), "z": (0.0, 0.0)},
+            "euler_deltas": {"pitch": (0.0, 0.0), "yaw": (0.0, 0.0), "roll": (0.0, 0.0)},
+        },
+    )
+
+    randomize_wrist_camera_focal_length = EventTerm(
+        func=task_mdp.randomize_camera_focal_length,
+        mode="reset",
+        params={
+            "camera_path_template": "/World/envs/env_{}/Robot/robotiq_base_link/rgb_wrist_camera",
+            "focal_length_range": (24.55, 24.55),
+        },
+    )
+
+    randomize_table_appearance = EventTerm(
+        func=task_mdp.randomize_visual_appearance_multiple_meshes,
+        mode="startup",
+        params={
+            "asset_cfg": SceneEntityCfg("table"),
+            "event_name": "fixed_table_event",
+            "mesh_names": ["visuals/vention_mat"],
+            "texture_prob": 0.0,
+            "colors": {"r": (0.55, 0.55), "g": (0.48, 0.48), "b": (0.38, 0.38)},
+            "texture_scale_range": (1.5, 1.5),
+            "roughness_range": (0.7, 0.7),
+            "metallic_range": (0.0, 0.0),
+            "specular_range": (0.3, 0.3),
+        },
+    )
+
+    randomize_sky_light = EventTerm(
+        func=task_mdp.randomize_hdri,
+        mode="startup",
+        params={
+            "light_path": "/World/skyLight",
+            "hdri_config_path": str(Path(__file__).parent / "resources" / "hdri_paths.yaml"),
+            "intensity_range": (3000.0, 3000.0),
+            "rotation_range": (0.0, 0.0),
+            "hdri_index": 0,
+        },
+    )
 
 
 @configclass

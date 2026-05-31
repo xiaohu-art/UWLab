@@ -1426,6 +1426,7 @@ class randomize_hdri(ManagerTermBase):
         hdri_config_path: str | None = None,
         intensity_range: tuple = (500.0, 1000.0),
         rotation_range: tuple = (0.0, 360.0),
+        hdri_index: int | None = None,
     ) -> None:
         stage = omni.usd.get_context().get_stage()
         light_prim = stage.GetPrimAtPath(light_path)
@@ -1440,8 +1441,12 @@ class randomize_hdri(ManagerTermBase):
         if not dome_light:
             raise RuntimeError(f"[randomize_hdri] Prim at '{light_path}' is not a DomeLight.")
 
-        random_hdri = random.choice(self.hdri_paths)
-        intensity = random.randint(int(intensity_range[0]), int(intensity_range[1]))
+        if hdri_index is None:
+            random_hdri = random.choice(self.hdri_paths)
+            intensity = random.randint(int(intensity_range[0]), int(intensity_range[1]))
+        else:
+            random_hdri = self.hdri_paths[hdri_index % len(self.hdri_paths)]
+            intensity = float(intensity_range[0])
 
         # Use direct attribute access (DEXTRAH-style) -- UsdLux helper methods
         # can map to the wrong schema attribute name depending on USD version.
@@ -1450,7 +1455,11 @@ class randomize_hdri(ManagerTermBase):
 
         from scipy.spatial.transform import Rotation as R
 
-        quat = R.random().as_quat()  # [x, y, z, w] scipy convention
+        if hdri_index is None:
+            quat = R.random().as_quat()  # [x, y, z, w] scipy convention
+        else:
+            yaw = float(rotation_range[0])
+            quat = R.from_euler("z", yaw, degrees=True).as_quat()
         xformable = UsdGeom.Xformable(light_prim)
         xformable.ClearXformOpOrder()
         xformable.AddOrientOp(precision=UsdGeom.XformOp.PrecisionDouble).Set(
