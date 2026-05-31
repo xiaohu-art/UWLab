@@ -1304,6 +1304,44 @@ class reset_root_states_uniform(ManagerTermBase):
             asset.write_root_velocity_to_sim(velocities, env_ids=env_ids)
 
 
+class force_root_upright_preserve_yaw(ManagerTermBase):
+    """Force an asset upright after another reset term, preserving position and yaw."""
+
+    def __init__(self, cfg: EventTermCfg, env: ManagerBasedEnv):
+        super().__init__(cfg, env)
+
+        pose_range_dict = cfg.params.get("pose_range", {})
+        self.roll_range = torch.tensor(pose_range_dict.get("roll", (0.0, 0.0)), device=env.device)
+        self.pitch_range = torch.tensor(pose_range_dict.get("pitch", (0.0, 0.0)), device=env.device)
+        self.asset_cfg = cfg.params.get("asset_cfg")
+        self.zero_velocity = cfg.params.get("zero_velocity", True)
+
+    def __call__(
+        self,
+        env: ManagerBasedEnv,
+        env_ids: torch.Tensor,
+        pose_range: dict[str, tuple[float, float]] = dict(),
+        asset_cfg: SceneEntityCfg = None,
+        zero_velocity: bool = True,
+    ) -> None:
+        asset: RigidObject | Articulation = env.scene[self.asset_cfg.name]
+
+        positions = asset.data.root_pos_w[env_ids].clone()
+        _, _, yaw = math_utils.euler_xyz_from_quat(asset.data.root_quat_w[env_ids])
+
+        roll = math_utils.sample_uniform(
+            self.roll_range[0], self.roll_range[1], (len(env_ids),), device=env.device
+        )
+        pitch = math_utils.sample_uniform(
+            self.pitch_range[0], self.pitch_range[1], (len(env_ids),), device=env.device
+        )
+        orientations = math_utils.quat_from_euler_xyz(roll, pitch, yaw)
+
+        asset.write_root_pose_to_sim(torch.cat([positions, orientations], dim=-1), env_ids=env_ids)
+        if self.zero_velocity:
+            asset.write_root_velocity_to_sim(torch.zeros((len(env_ids), 6), device=env.device), env_ids=env_ids)
+
+
 class randomize_hdri(ManagerTermBase):
     """Randomizes the HDRI texture, intensity, and rotation.
 

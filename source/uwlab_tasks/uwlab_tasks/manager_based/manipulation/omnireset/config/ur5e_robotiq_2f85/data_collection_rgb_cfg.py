@@ -253,46 +253,19 @@ class DataCollectionRGBEventCfg(RGBEventCfg):
 
 
 @configclass
-class CleanUprightPegRGBEventCfg:
-    """Clean success collection reset: fixed robot/cameras/lights, upright peg on the table."""
+class CleanUprightPegRGBEventCfg(DataCollectionRGBEventCfg):
+    """Original RGB data-collection reset, then force the insertive object upright."""
 
-    reset_everything = EventTerm(func=task_mdp.reset_scene_to_default, mode="reset", params={})
-
-    reset_receptive_object_pose = EventTerm(
-        func=task_mdp.reset_root_states_uniform,
+    force_insertive_object_upright = EventTerm(
+        func=task_mdp.force_root_upright_preserve_yaw,
         mode="reset",
         params={
             "pose_range": {
-                "x": (0.3, 0.55),
-                "y": (-0.1, 0.3),
-                "z": (0.0, 0.0),
                 "roll": (0.0, 0.0),
                 "pitch": (0.0, 0.0),
-                "yaw": (0.0, 0.0),
             },
-            "velocity_range": {},
-            "asset_cfgs": {"receptive_object": SceneEntityCfg("receptive_object")},
-            "offset_asset_cfg": SceneEntityCfg("ur5_metal_support"),
-            "use_bottom_offset": True,
-        },
-    )
-
-    reset_insertive_object_pose = EventTerm(
-        func=task_mdp.reset_root_states_uniform,
-        mode="reset",
-        params={
-            "pose_range": {
-                "x": (0.3, 0.55),
-                "y": (-0.1, 0.5),
-                "z": (0.0, 0.0),
-                "roll": (0.0, 0.0),
-                "pitch": (0.0, 0.0),
-                "yaw": (0.0, 0.0),
-            },
-            "velocity_range": {},
-            "asset_cfgs": {"insertive_object": SceneEntityCfg("insertive_object")},
-            "offset_asset_cfg": SceneEntityCfg("ur5_metal_support"),
-            "use_bottom_offset": True,
+            "asset_cfg": SceneEntityCfg("insertive_object"),
+            "zero_velocity": True,
         },
     )
 
