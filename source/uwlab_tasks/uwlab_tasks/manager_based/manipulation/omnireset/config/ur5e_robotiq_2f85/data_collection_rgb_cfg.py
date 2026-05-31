@@ -298,6 +298,20 @@ class FixedRobotCleanUprightPegRGBEventCfg(DataCollectionRGBEventCfg):
 
 
 @configclass
+class FixedRobotFixedVisualCleanUprightPegRGBEventCfg(FixedRobotCleanUprightPegRGBEventCfg):
+    """Fixed robot/upright peg data collection with camera and lighting randomization disabled."""
+
+    randomize_front_camera = None
+    randomize_front_camera_focal_length = None
+    randomize_side_camera = None
+    randomize_side_camera_focal_length = None
+    randomize_wrist_camera = None
+    randomize_wrist_camera_focal_length = None
+    randomize_table_appearance = None
+    randomize_sky_light = None
+
+
+@configclass
 class RGBCommandsCfg:
     """Command specifications for the MDP."""
 
@@ -515,6 +529,21 @@ class DataCollectionRGBTerminationsCfg:
 
 
 @configclass
+class RejectInitialSuccessDataCollectionRGBTerminationsCfg(DataCollectionRGBTerminationsCfg):
+    initial_near_success = DoneTerm(
+        func=task_mdp.initial_near_success_termination,
+        params={
+            "insertive_asset_cfg": SceneEntityCfg("insertive_object"),
+            "receptive_asset_cfg": SceneEntityCfg("receptive_object"),
+            "command_name": "task_command",
+            "max_episode_length": 5,
+            "position_threshold_scale": 1.5,
+            "orientation_threshold_scale": 1.5,
+        },
+    )
+
+
+@configclass
 class Ur5eRobotiq2f85RGBRelCartesianOSCEvalCfg(Ur5eRobotiq2f85RlStateCfg):
     """RGB base config: fixed sysid + RGB scene/obs/terminations/render."""
 
@@ -566,6 +595,18 @@ class Ur5eRobotiq2f85FixedRobotCleanUprightPegDataCollectionRGBRelCartesianOSCCf
     """RGB data collection with default robot state and upright peg after reset-state replay."""
 
     events: FixedRobotCleanUprightPegRGBEventCfg = FixedRobotCleanUprightPegRGBEventCfg()
+
+
+@configclass
+class Ur5eRobotiq2f85FixedRobotFixedVisualCleanUprightPegDataCollectionRGBRelCartesianOSCCfg(
+    Ur5eRobotiq2f85RGBRelCartesianOSCEvalCfg
+):
+    """Clean peg data collection with fixed robot, fixed RGB setup, and initial-success rejection."""
+
+    events: FixedRobotFixedVisualCleanUprightPegRGBEventCfg = FixedRobotFixedVisualCleanUprightPegRGBEventCfg()
+    terminations: RejectInitialSuccessDataCollectionRGBTerminationsCfg = (
+        RejectInitialSuccessDataCollectionRGBTerminationsCfg()
+    )
 
 
 @configclass

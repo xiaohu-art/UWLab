@@ -777,6 +777,72 @@ def early_success_termination(env: ManagerBasedRLEnv, num_consecutive_successes:
     return is_successful & is_too_short
 
 
+class initial_near_success_termination(ManagerTermBase):
+    """Terminate episodes whose reset state is already close to the assembled pose."""
+
+    def __init__(self, cfg: TerminationTermCfg, env: ManagerBasedRLEnv):
+        super().__init__(cfg, env)
+
+        self.insertive_asset: Articulation | RigidObject = env.scene[cfg.params.get("insertive_asset_cfg").name]
+        self.receptive_asset: Articulation | RigidObject = env.scene[cfg.params.get("receptive_asset_cfg").name]
+
+        insertive_meta = utils.read_metadata_from_usd_directory(self.insertive_asset.cfg.spawn.usd_path)
+        receptive_meta = utils.read_metadata_from_usd_directory(self.receptive_asset.cfg.spawn.usd_path)
+        self.insertive_asset_offset = Offset(
+            pos=tuple(insertive_meta.get("assembled_offset").get("pos")),
+            quat=tuple(insertive_meta.get("assembled_offset").get("quat")),
+        )
+        self.receptive_asset_offset = Offset(
+            pos=tuple(receptive_meta.get("assembled_offset").get("pos")),
+            quat=tuple(receptive_meta.get("assembled_offset").get("quat")),
+        )
+
+    def __call__(
+        self,
+        env: ManagerBasedRLEnv,
+        insertive_asset_cfg: SceneEntityCfg,
+        receptive_asset_cfg: SceneEntityCfg,
+        command_name: str = "task_command",
+        max_episode_length: int = 5,
+        position_threshold: float | None = None,
+        orientation_threshold: float | None = None,
+        position_threshold_scale: float = 1.5,
+        orientation_threshold_scale: float = 1.5,
+    ) -> torch.Tensor:
+        task_command = env.command_manager.get_term(command_name)
+        pos_threshold = (
+            position_threshold
+            if position_threshold is not None
+            else task_command.success_position_threshold * position_threshold_scale
+        )
+        orn_threshold = (
+            orientation_threshold
+            if orientation_threshold is not None
+            else task_command.success_orientation_threshold * orientation_threshold_scale
+        )
+
+        insertive_asset_alignment_pos_w, insertive_asset_alignment_quat_w = self.insertive_asset_offset.apply(
+            self.insertive_asset
+        )
+        receptive_asset_alignment_pos_w, receptive_asset_alignment_quat_w = self.receptive_asset_offset.apply(
+            self.receptive_asset
+        )
+        insertive_asset_in_receptive_asset_frame_pos, insertive_asset_in_receptive_asset_frame_quat = (
+            math_utils.subtract_frame_transforms(
+                receptive_asset_alignment_pos_w,
+                receptive_asset_alignment_quat_w,
+                insertive_asset_alignment_pos_w,
+                insertive_asset_alignment_quat_w,
+            )
+        )
+        e_x, e_y, _ = math_utils.euler_xyz_from_quat(insertive_asset_in_receptive_asset_frame_quat)
+        euler_xy_distance = math_utils.wrap_to_pi(e_x).abs() + math_utils.wrap_to_pi(e_y).abs()
+        xyz_distance = torch.norm(insertive_asset_in_receptive_asset_frame_pos, dim=1)
+
+        near_success = (xyz_distance < pos_threshold) & (euler_xy_distance < orn_threshold)
+        return near_success & (env.episode_length_buf <= max_episode_length)
+
+
 def corrupted_camera_detected(
     env: ManagerBasedRLEnv, camera_names: list[str], std_threshold: float = 10.0
 ) -> torch.Tensor:
